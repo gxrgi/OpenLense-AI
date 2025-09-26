@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+groq
+crewai
+langchain-groq
+pypdf
+python-docx
+agno
+dotenv
+google.genai
