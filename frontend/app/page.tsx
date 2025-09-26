@@ -22,9 +22,7 @@ export default function LandingPage() {
             <Link href="https://github.com" className="text-muted-foreground hover:text-foreground transition-colors">
               GitHub
             </Link>
-            <Button variant="outline" size="sm">
-              Sign in
-            </Button>
+            
           </div>
         </div>
       </nav>

@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "name": "Golden Labrador Retriever",
+      "description": "A light golden-colored Labrador Retriever dog, sitting with its mouth open and tongue out, looking forward."
+    },
+    {
+      "name": "Orange Tabby Cat",
+      "description": "An orange tabby cat with striped fur, sitting next to the dog and looking forward."
+    }
+  ],
+  "object_count": 2
+}

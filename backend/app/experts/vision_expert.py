@@ -12,7 +12,7 @@ load_dotenv(ENV_PATH.as_posix())  # loads GOOGLE_API_KEY / GEMINI_API_KEY from a
 
 # ---------- Inputs ----------
 IMAGE_PATH =r'C:\Users\Kanak\OneDrive\Desktop\OpenLense\proj\backend\app\upload\image.png'
-OUT_JSON = Path(sys.argv[2]) if len(sys.argv) > 2 else (APP_DIR / "upload" / "objects_response.json")
+OUT_JSON = Path(sys.argv[2]) if len(sys.argv) > 2 else (APP_DIR / "response" / "objects_response.json")
 MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
