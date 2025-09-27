@@ -11,6 +11,7 @@ import { ImageUpload } from "@/components/image-upload"
 import { CameraCapture } from "@/components/camera-capture"
 import { EntitySelection } from "@/components/entity-selection"
 
+// This interface already matches the backend's entity structure, which is great!
 interface Entity {
   id: string
   name: string
@@ -25,77 +26,69 @@ export default function ConversationObjectsPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const [entities, setEntities] = useState<Entity[]>([])
   const [isAnalyzed, setIsAnalyzed] = useState(false)
+  const [error, setError] = useState<string | null>(null);
 
   const handleImageSelect = (imageUrl: string) => {
     setImage(imageUrl)
+    setError(null); // Clear previous errors when a new image is selected
   }
 
   const analyzeImage = async () => {
     if (!image) return
 
     setIsAnalyzing(true)
-    setAnalysisProgress(0)
+    setIsAnalyzed(false)
+    setError(null)
+    setAnalysisProgress(0) // Start progress simulation
 
     try {
+      // Simulate progress for better UX
+      setTimeout(() => setAnalysisProgress(30), 300)
+      setTimeout(() => setAnalysisProgress(60), 1000)
+
       // Convert data URL to Blob/File for upload
       const response = await fetch(image)
       const blob = await response.blob()
-      const file = new File([blob], "image.png", { type: "image/png" }) // Adjust type if needed (e.g., jpeg)
+      const file = new File([blob], "image.png", { type: "image/png" })
 
-      // Prepare FormData
       const formData = new FormData()
       formData.append("file", file)
 
-      // Send to backend (replace with your backend URL, e.g., http://localhost:8000/analyze)
-      const apiResponse = await fetch("http://localhost:8000/analyze", { // Adjust port if needed
+      // Send to your FastAPI backend
+      const apiResponse = await fetch("http://localhost:8000/analyze", {
         method: "POST",
         body: formData,
       })
 
       if (!apiResponse.ok) {
-        throw new Error(`API error: ${apiResponse.status}`)
+        const errorData = await apiResponse.json().catch(() => ({ detail: "An unknown API error occurred." }));
+        throw new Error(errorData.detail || `API error: ${apiResponse.statusText}`);
       }
 
       const data = await apiResponse.json()
 
-      // Map backend response to Entity[] format
-      // Backend returns: {items: [{name, description}], object_count}
-      // We'll derive category as "Object" (or parse from description if possible)
-      // Attributes: Use description as a single attribute, or parse it (simple split example)
-      const mappedEntities: Entity[] = data.items.map((item: {name: string, description: string}, index: number) => {
-        // Simple parsing: assume description like "A golden dog, breed: Golden Retriever, size: Large"
-        const attributes: Record<string, string> = {}
-        const descParts = item.description.split(", ")
-        descParts.forEach(part => {
-          const [key, value] = part.split(": ")
-          if (key && value) {
-            attributes[key.trim()] = value.trim()
-          }
-        })
+      // --- KEY FIX STARTS HERE ---
 
-        // Fallback if no attributes parsed
-        if (Object.keys(attributes).length === 0) {
-          attributes["description"] = item.description
-        }
+      // FIXED: The backend returns an array called "entities", not "items".
+      // We check if it exists and is an array before trying to map it.
+      if (!data.entities || !Array.isArray(data.entities)) {
+          throw new Error("Invalid response format from server. 'entities' array not found.");
+      }
 
-        // Derive category: Use first attribute or default to "Object"
-        const category = attributes["type"] || attributes["breed"] ? (attributes["type"] || "Animal") : "Object"
+      // FIXED: The backend already provides data in the exact `Entity` format.
+      // No complex mapping is needed. We can use the data directly.
+      const mappedEntities: Entity[] = data.entities;
 
-        return {
-          id: `${index + 1}`,
-          name: item.name,
-          category,
-          attributes,
-        }
-      })
+      // --- KEY FIX ENDS HERE ---
 
       setEntities(mappedEntities)
       setAnalysisProgress(100)
       setIsAnalyzed(true)
-    } catch (error) {
-      console.error("Analysis failed:", error)
-      // Handle error (e.g., show toast or alert)
-      alert("Failed to analyze image. Please try again.")
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred.";
+      console.error("Analysis failed:", errorMessage)
+      setError(errorMessage); // Set error state to display to the user
       setAnalysisProgress(0)
     } finally {
       setIsAnalyzing(false)
@@ -152,13 +145,12 @@ export default function ConversationObjectsPage() {
               </TabsContent>
             </Tabs>
 
-            {/* Selected Image Preview */}
             {image && (
               <div className="space-y-4">
                 <h3 className="font-medium">Selected Image</h3>
                 <div className="relative max-w-md mx-auto">
                   <img
-                    src={image || "/placeholder.svg"}
+                    src={image}
                     alt="Selected for analysis"
                     className="w-full h-auto rounded-lg border border-border"
                   />
@@ -166,7 +158,6 @@ export default function ConversationObjectsPage() {
               </div>
             )}
 
-            {/* Analysis Progress */}
             {isAnalyzing && (
               <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-between">
@@ -177,7 +168,14 @@ export default function ConversationObjectsPage() {
               </div>
             )}
 
-            {/* Analyze Button */}
+             {/* Error Message Display */}
+            {error && (
+                <div className="p-4 bg-destructive/10 border border-destructive/50 text-destructive rounded-lg text-center">
+                    <p className="font-semibold">Analysis Failed</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+            )}
+
             <Button onClick={analyzeImage} disabled={!image || isAnalyzing} className="w-full" size="lg">
               {isAnalyzing ? (
                 <>Analyzing Image...</>
