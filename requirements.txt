@@ -1,34 +1,36 @@
+# Web Framework & Server
 fastapi
 uvicorn[standard]
+streamlit
+python-multipart
+
+# AI & LangChain Core
+langchain
+langchain_community
+crewai
+
+# LLM & API Integrations
+langchain-groq
+groq
+langchain-google-genai
+google-generativeai
+
+# Vector Store & Embeddings
+faiss-cpu
+sentence-transformers
+InstructorEmbedding
+
+# Document Processing
+pypdf
+python-docx
+PyMuPDF
+Pillow
+unstructured[pdf, local-inference]
+python-magic-bin; sys_platform == 'win32' # For unstructured on Windows
+
+# Authentication & Utilities
 pydantic
 python-dotenv
 passlib[bcrypt]
 python-jose[cryptography]
-python-multipart
-groq
-crewai
-langchain-groq
-pypdf
-python-docx
 agno
-dotenv
-google.genai
-
-# Core Streamlit and LangChain
-streamlit
-langchain
-langchain_community
-langchain-groq
-python-dotenv
-langchain-google-genai  # <-- Add this
-
-# Vector Store
-faiss-cpu
-
-# PDF and Image Processing
-PyMuPDF
-Pillow
-
-# Local Embedding Model
-sentence-transformers
-# You can remove torch, transformers, bitsandbytes, accelerate if not using Llava
