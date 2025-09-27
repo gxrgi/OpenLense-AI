@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -40,6 +40,8 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
   const [selectedTarget, setSelectedTarget] = useState("all")
   const [filteredSpeaker, setFilteredSpeaker] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
 
   const entitiesWithColors = entities.map((entity, index) => ({
     ...entity,
@@ -53,10 +55,17 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
     "What do you think of each other?",
   ]
 
-  const handleSend = async () => {
-    if (!input.trim()) return
+  // Automatically scroll to the bottom when new messages are added
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages]);
 
-    // Add user message
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return
+
     const userMessage: Message = {
       id: Date.now().toString(),
       speaker: "You",
@@ -65,84 +74,76 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
       timestamp: new Date(),
       color: "bg-primary",
     }
+    
+    // Use a functional update to ensure we have the latest state
+    const currentInput = input;
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setInput("");
+    setIsLoading(true);
 
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
+    try {
+      // Get the most recent message list for the API call
+      const updatedMessages = [...messages, userMessage];
+      const historyForApi = updatedMessages.map(({ speaker, content }) => ({ speaker, content }));
 
-    // Simulate AI responses
-    setTimeout(() => {
-      const responses: Message[] = []
+      const response = await fetch("http://localhost:8001/chat/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entities: entities,
+          history: historyForApi,
+          user_message: currentInput,
+          target_entity_id: selectedTarget,
+        }),
+      });
 
-      if (selectedTarget === "all") {
-        // All entities respond
-        entitiesWithColors.forEach((entity, index) => {
-          responses.push({
-            id: `${Date.now()}-${index}`,
-            speaker: entity.name,
-            speakerId: entity.id,
-            content: `Hi! I'm ${entity.name}, a ${entity.category.toLowerCase()}. ${generateEntityResponse(entity, userMessage.content)}`,
-            timestamp: new Date(Date.now() + index * 1000),
-            color: entity.color,
-          })
-        })
-      } else {
-        // Single entity responds
-        const targetEntity = entitiesWithColors.find((e) => e.id === selectedTarget)
-        if (targetEntity) {
-          responses.push({
-            id: Date.now().toString(),
-            speaker: targetEntity.name,
-            speakerId: targetEntity.id,
-            content: generateEntityResponse(targetEntity, userMessage.content),
-            timestamp: new Date(),
-            color: targetEntity.color,
-          })
-        }
+      if (!response.ok) {
+        throw new Error("Failed to get a response from the server.");
       }
 
-      setMessages((prev) => [...prev, ...responses])
-      setIsLoading(false)
-    }, 2000)
-  }
+      const aiResponses: { speaker: string; speakerId: string; content: string }[] = await response.json();
 
-  const generateEntityResponse = (entity: Entity, userInput: string) => {
-    const responses = {
-      Animal: [
-        "Woof! I love playing and being friendly with everyone!",
-        "I'm always excited to meet new friends and explore!",
-        "My favorite activities are playing fetch and running around!",
-      ],
-      Toy: [
-        "I'm here to bring joy and fun to playtime!",
-        "I love being part of games and adventures!",
-        "I'm designed to be durable and entertaining!",
-      ],
-      Furniture: [
-        "I provide comfort and support for everyone who needs rest.",
-        "I've been here watching over this space for a while.",
-        "I'm built to last and serve the community well.",
-      ],
+      const newAiMessages: Message[] = aiResponses.map((res, index) => {
+        const entity = entitiesWithColors.find(e => e.id === res.speakerId);
+        return {
+          id: `${Date.now()}-${index}`,
+          speaker: res.speaker,
+          speakerId: res.speakerId,
+          content: res.content,
+          timestamp: new Date(),
+          color: entity ? entity.color : "bg-gray-500",
+        };
+      });
+
+      setMessages(prev => [...prev, ...newAiMessages]);
+
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      const errorMessage: Message = {
+        id: `${Date.now()}-error`,
+        speaker: "System",
+        speakerId: "system",
+        content: "Sorry, I couldn't connect to the chat service. Please try again.",
+        timestamp: new Date(),
+        color: "bg-red-500",
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
-
-    const categoryResponses = responses[entity.category as keyof typeof responses] || [
-      "I'm unique in my own way and happy to be here!",
-      "Each of us brings something special to this scene.",
-      "I have my own perspective on what's happening here.",
-    ]
-
-    return categoryResponses[Math.floor(Math.random() * categoryResponses.length)]
-  }
+  };
 
   const handleQuickPrompt = (prompt: string) => {
     setInput(prompt)
   }
 
-  const filteredMessages = filteredSpeaker ? messages.filter((m) => m.speakerId === filteredSpeaker) : messages
+  // Always show the user's messages, even when filtering
+  const filteredMessages = filteredSpeaker 
+    ? messages.filter((m) => m.speakerId === filteredSpeaker || m.speakerId === "user") 
+    : messages;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
       <nav className="border-b border-border bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -166,36 +167,14 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
       <div className="flex h-[calc(100vh-73px)]">
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col">
-          {/* Chat Header */}
           <div className="p-4 border-b border-border bg-card/50">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Multi-Entity Conversation</h2>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Entity
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Add More Entities</SheetTitle>
-                  </SheetHeader>
-                  <div className="py-4">
-                    <p className="text-sm text-muted-foreground">
-                      Re-analyze the image to detect additional entities or upload a new image.
-                    </p>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-
-            {/* Entity Avatar Chips */}
-            <div className="flex items-center space-x-2 mb-4">
+            <h2 className="text-lg font-semibold mb-4">Multi-Entity Conversation</h2>
+            <div className="flex items-center space-x-2 mb-4 overflow-x-auto pb-2">
               <Button
                 variant={filteredSpeaker === null ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilteredSpeaker(null)}
+                className="flex-shrink-0"
               >
                 <Users className="h-4 w-4 mr-1" />
                 All
@@ -206,7 +185,7 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
                   variant={filteredSpeaker === entity.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilteredSpeaker(entity.id)}
-                  className="flex items-center space-x-1"
+                  className="flex items-center space-x-1 flex-shrink-0"
                 >
                   <div className={`w-3 h-3 rounded-full ${entity.color}`} />
                   <span>{entity.name}</span>
@@ -214,20 +193,16 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
               ))}
             </div>
           </div>
-
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
             {messages.length === 0 ? (
               <div className="space-y-6">
-                <div className="text-center py-8">
+                 <div className="text-center py-8">
                   <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">Start the conversation</h3>
                   <p className="text-muted-foreground mb-6">
                     Ask questions or use quick prompts to get the entities talking
                   </p>
                 </div>
-
-                {/* Quick Prompts */}
                 <div className="grid grid-cols-2 gap-2 max-w-2xl mx-auto">
                   {quickPrompts.map((prompt, index) => (
                     <Button
@@ -245,39 +220,37 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
             ) : (
               <div className="space-y-4">
                 {filteredMessages.map((message) => (
-                  <div key={message.id} className="flex items-start space-x-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${message.color}`}
-                    >
-                      {message.speaker === "You" ? "Y" : message.speaker.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
+                  <div key={message.id} className={`flex items-start space-x-3 ${message.speakerId === 'user' ? 'justify-end' : ''}`}>
+                     {message.speakerId !== 'user' && (
+                      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-medium ${message.color}`}>
+                        {message.speaker.charAt(0)}
+                      </div>
+                    )}
+                    <div className={`max-w-xl ${message.speakerId === 'user' ? 'text-right' : 'text-left'}`}>
+                      <div className={`flex items-center space-x-2 mb-1 ${message.speakerId === 'user' ? 'justify-end' : ''}`}>
                         <span className="font-medium text-sm">{message.speaker}</span>
-                        <span className="text-xs text-muted-foreground">{message.timestamp.toLocaleTimeString()}</span>
+                        <span className="text-xs text-muted-foreground">{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      <div className="bg-muted p-3 rounded-lg">
-                        <p className="text-sm">{message.content}</p>
+                      <div className={`p-3 rounded-lg inline-block ${message.speakerId === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                        <p className="text-sm text-left">{message.content}</p>
                       </div>
                     </div>
+                     {message.speakerId === 'user' && (
+                      <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-medium ${message.color}`}>
+                        Y
+                      </div>
+                    )}
                   </div>
                 ))}
-
                 {isLoading && (
                   <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
                     <div className="flex-1">
-                      <div className="bg-muted p-3 rounded-lg">
+                       <div className="bg-muted p-3 rounded-lg inline-block">
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                          <div
-                            className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                            style={{ animationDelay: "0.1s" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                            style={{ animationDelay: "0.2s" }}
-                          ></div>
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                         </div>
                       </div>
                     </div>
@@ -286,8 +259,6 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
               </div>
             )}
           </ScrollArea>
-
-          {/* Input Area */}
           <div className="p-4 border-t border-border bg-card/50">
             <div className="flex items-center space-x-2 mb-3">
               <span className="text-sm text-muted-foreground">Ask:</span>
@@ -305,7 +276,6 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="flex space-x-2">
               <Input
                 value={input}
@@ -313,6 +283,7 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
                 placeholder="Type your message..."
                 onKeyPress={(e) => e.key === "Enter" && handleSend()}
                 className="flex-1"
+                disabled={isLoading}
               />
               <Button onClick={handleSend} disabled={!input.trim() || isLoading}>
                 <Send className="h-4 w-4" />
@@ -320,17 +291,14 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
             </div>
           </div>
         </div>
-
-        {/* Side Panel */}
-        <div className="w-80 border-l border-border bg-card/50">
-          <div className="p-4 border-b border-border">
+        <div className="w-80 border-l border-border bg-card/50 hidden lg:block">
+           <div className="p-4 border-b border-border">
             <h3 className="font-semibold mb-4">Scene Overview</h3>
             <img src={image || "/placeholder.svg"} alt="Scene" className="w-full h-32 object-cover rounded-lg mb-4" />
           </div>
-
           <div className="p-4">
             <h3 className="font-semibold mb-4">Entity Facts</h3>
-            <ScrollArea className="h-64">
+            <ScrollArea className="h-[calc(100vh-300px)]">
               <div className="space-y-4">
                 {entitiesWithColors.map((entity) => (
                   <Card key={entity.id} className="p-3">
@@ -344,7 +312,7 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
                     <div className="space-y-1">
                       {Object.entries(entity.attributes).map(([key, value]) => (
                         <div key={key} className="text-xs">
-                          <span className="text-muted-foreground">{key}:</span> {value}
+                          <span className="text-muted-foreground">{key}:</span> {String(value)}
                         </div>
                       ))}
                     </div>
@@ -352,16 +320,6 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
                 ))}
               </div>
             </ScrollArea>
-
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-              <div className="flex items-start space-x-2">
-                <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div className="text-xs text-muted-foreground">
-                  <p className="font-medium mb-1">Safety Notice</p>
-                  <p>No identification of real people.</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
