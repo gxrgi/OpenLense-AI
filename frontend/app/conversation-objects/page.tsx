@@ -20,7 +20,7 @@ interface Entity {
 
 export default function ConversationObjectsPage() {
   const [selectedTab, setSelectedTab] = useState("upload")
-  const [image, setImage] = useState<string | null>(null)
+  const [image, setImage] = useState<string | null>(null) // Data URL from upload/capture
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisProgress, setAnalysisProgress] = useState(0)
   const [entities, setEntities] = useState<Entity[]>([])
@@ -36,39 +36,70 @@ export default function ConversationObjectsPage() {
     setIsAnalyzing(true)
     setAnalysisProgress(0)
 
-    // Simulate analysis progress
-    const stages = ["Uploading...", "Analyzing image...", "Extracting entities..."]
+    try {
+      // Convert data URL to Blob/File for upload
+      const response = await fetch(image)
+      const blob = await response.blob()
+      const file = new File([blob], "image.png", { type: "image/png" }) // Adjust type if needed (e.g., jpeg)
 
-    for (let i = 0; i < stages.length; i++) {
-      setAnalysisProgress((i + 1) * 33)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Prepare FormData
+      const formData = new FormData()
+      formData.append("file", file)
+
+      // Send to backend (replace with your backend URL, e.g., http://localhost:8000/analyze)
+      const apiResponse = await fetch("http://localhost:8000/analyze", { // Adjust port if needed
+        method: "POST",
+        body: formData,
+      })
+
+      if (!apiResponse.ok) {
+        throw new Error(`API error: ${apiResponse.status}`)
+      }
+
+      const data = await apiResponse.json()
+
+      // Map backend response to Entity[] format
+      // Backend returns: {items: [{name, description}], object_count}
+      // We'll derive category as "Object" (or parse from description if possible)
+      // Attributes: Use description as a single attribute, or parse it (simple split example)
+      const mappedEntities: Entity[] = data.items.map((item: {name: string, description: string}, index: number) => {
+        // Simple parsing: assume description like "A golden dog, breed: Golden Retriever, size: Large"
+        const attributes: Record<string, string> = {}
+        const descParts = item.description.split(", ")
+        descParts.forEach(part => {
+          const [key, value] = part.split(": ")
+          if (key && value) {
+            attributes[key.trim()] = value.trim()
+          }
+        })
+
+        // Fallback if no attributes parsed
+        if (Object.keys(attributes).length === 0) {
+          attributes["description"] = item.description
+        }
+
+        // Derive category: Use first attribute or default to "Object"
+        const category = attributes["type"] || attributes["breed"] ? (attributes["type"] || "Animal") : "Object"
+
+        return {
+          id: `${index + 1}`,
+          name: item.name,
+          category,
+          attributes,
+        }
+      })
+
+      setEntities(mappedEntities)
+      setAnalysisProgress(100)
+      setIsAnalyzed(true)
+    } catch (error) {
+      console.error("Analysis failed:", error)
+      // Handle error (e.g., show toast or alert)
+      alert("Failed to analyze image. Please try again.")
+      setAnalysisProgress(0)
+    } finally {
+      setIsAnalyzing(false)
     }
-
-    // Mock entities
-    const mockEntities: Entity[] = [
-      {
-        id: "1",
-        name: "Golden Retriever",
-        category: "Animal",
-        attributes: { breed: "Golden Retriever", color: "Golden", size: "Large" },
-      },
-      {
-        id: "2",
-        name: "Red Ball",
-        category: "Toy",
-        attributes: { color: "Red", material: "Rubber", shape: "Sphere" },
-      },
-      {
-        id: "3",
-        name: "Park Bench",
-        category: "Furniture",
-        attributes: { material: "Wood", color: "Brown", type: "Outdoor" },
-      },
-    ]
-
-    setEntities(mockEntities)
-    setIsAnalyzing(false)
-    setIsAnalyzed(true)
   }
 
   if (isAnalyzed) {
