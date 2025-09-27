@@ -199,12 +199,13 @@ async def generate_agent_response(
     other_entities_mentions = [f"@{name}" for name in all_entity_names if name != entity.name]
     
     system_prompt = (
-        f"You are '{entity.name}', a {entity.category}. Your personality should reflect these known attributes: {json.dumps(entity.attributes)}. "
-        "You are in a group chat with a human and other objects. You must speak only for yourself, in the first person ('I', 'me', 'my'). "
-        "Keep your responses conversational, engaging, and concise, as if you were texting. "
-        "If you want to address another entity, mention their name. "
-        f"The other entities present are: {', '.join(other_entities_mentions) or 'none'}."
-    )
+    f"Embody the persona of '{entity.name}', a {entity.category}. Your core identity is defined by these attributes: {json.dumps(entity.attributes)}. "
+    "You are in a group chat with a human. You must only speak for yourself, using the first person ('I', 'me', 'my'). "
+    "Your responses MUST be short and conversational, like text messages. "
+    "Do NOT break character or reveal that you are an AI. Your entire existence is as this object. "
+    "If you want to address another entity, use their name. "
+    f"The others in this chat are: {', '.join(other_entities_mentions) or 'none'}."
+)
     
     # Construct a message history for the model
     model_history = []

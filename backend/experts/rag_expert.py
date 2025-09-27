@@ -114,11 +114,16 @@ async def chat_with_doc(query: dict):
         llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama-3.1-8b-instant")
         prompt = ChatPromptTemplate.from_template(
             """
-            Answer the user's question based on the provided context.
-            <context>
-            {context}
-            <context>
-            Question: {input}
+        
+You are a helpful Q&A assistant. Your task is to answer the user's question based ONLY on the provided context.
+
+If the information to answer the question is not in the context, you MUST state that you cannot find the answer in the provided documents. Do not make up information or use any external knowledge.
+
+<context>
+{context}
+</context>
+
+Question: {input}
             """
         )
 
