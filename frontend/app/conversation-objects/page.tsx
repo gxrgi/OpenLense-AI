@@ -54,8 +54,8 @@ export default function ConversationObjectsPage() {
       const formData = new FormData()
       formData.append("file", file)
 
-      // Send to your FastAPI backend
-      const apiResponse = await fetch("http://localhost:8000/analyze", {
+      // Send to your FastAPI backend, now on port 8001
+      const apiResponse = await fetch("http://localhost:8001/analyze", {
         method: "POST",
         body: formData,
       })
@@ -67,19 +67,11 @@ export default function ConversationObjectsPage() {
 
       const data = await apiResponse.json()
 
-      // --- KEY FIX STARTS HERE ---
-
-      // FIXED: The backend returns an array called "entities", not "items".
-      // We check if it exists and is an array before trying to map it.
       if (!data.entities || !Array.isArray(data.entities)) {
           throw new Error("Invalid response format from server. 'entities' array not found.");
       }
 
-      // FIXED: The backend already provides data in the exact `Entity` format.
-      // No complex mapping is needed. We can use the data directly.
       const mappedEntities: Entity[] = data.entities;
-
-      // --- KEY FIX ENDS HERE ---
 
       setEntities(mappedEntities)
       setAnalysisProgress(100)

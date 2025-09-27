@@ -1,0 +1,34 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+groq
+crewai
+langchain-groq
+pypdf
+python-docx
+agno
+dotenv
+google.genai
+
+# Core Streamlit and LangChain
+streamlit
+langchain
+langchain_community
+langchain-groq
+python-dotenv
+langchain-google-genai  # <-- Add this
+
+# Vector Store
+faiss-cpu
+
+# PDF and Image Processing
+PyMuPDF
+Pillow
+
+# Local Embedding Model
+sentence-transformers
+# You can remove torch, transformers, bitsandbytes, accelerate if not using Llava

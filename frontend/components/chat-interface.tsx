@@ -22,7 +22,9 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ files }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>([
+    { role: "assistant", content: `I'm ready! Ask me anything about ${files.map(f => f.name).join(', ')}.` }
+  ]);
   const [input, setInput] = useState("")
   const [useSourcesOnly, setUseSourcesOnly] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -35,27 +37,42 @@ export function ChatInterface({ files }: ChatInterfaceProps) {
   ]
 
   const handleSend = async () => {
-    if (!input.trim()) return
+    if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: input }
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
+    const userMessage: Message = { role: "user", content: input };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: `Based on the uploaded documents, here's what I found regarding "${input}". This information comes from the processed content with relevant citations.`,
-        citations: [
-          { page: 12, snippet: "Key finding from page 12..." },
-          { page: 24, snippet: "Supporting evidence from page 24..." },
-        ],
+    try {
+      // Send the user's question to the /chat/ endpoint
+      const response = await fetch("http://127.0.0.1:8002/chat/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: input }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "An error occurred while fetching the response.");
       }
-      setMessages((prev) => [...prev, assistantMessage])
-      setIsLoading(false)
-    }, 2000)
-  }
+
+      const result = await response.json();
+      
+      // Add the AI's answer to the chat history
+      // Note: Citations are not yet implemented in the backend, so we are just displaying the text answer for now.
+      const assistantMessage: Message = { role: "assistant", content: result.answer };
+      setMessages((prev) => [...prev, assistantMessage]);
+
+    } catch (error) {
+      console.error("Chat error:", error);
+      // Show an error message in the chat
+      const errorMessage: Message = { role: "assistant", content: `Sorry, something went wrong: ${error.message}` };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleQuickPrompt = (prompt: string) => {
     setInput(prompt)

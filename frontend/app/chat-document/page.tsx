@@ -32,23 +32,61 @@ export default function ChatDocumentPage() {
   }
 
   const processDocuments = async () => {
-    if (files.length === 0) return
+    if (files.length === 0) return;
 
-    setIsProcessing(true)
-    setProcessingProgress(0)
+    setIsProcessing(true);
+    setProcessingStage("Uploading...");
+    setProcessingProgress(0);
 
-    // Simulate processing stages
-    const stages = ["Uploading...", "Extracting...", "Chunking...", "Indexing..."]
+    const formData = new FormData();
+    // Append all files to the form data
+    files.forEach(file => {
+      formData.append("files", file);
+    });
+    // Append the options
+    formData.append("chunk_size", chunkSize);
+    formData.append("embedding_model", embeddingModel);
+    
+    try {
+      // Make the actual API call to your backend
+      const response = await fetch("http://127.0.0.1:8002/process-documents/", {
+        method: "POST",
+        body: formData,
+      });
 
-    for (let i = 0; i < stages.length; i++) {
-      setProcessingStage(stages[i])
-      setProcessingProgress((i + 1) * 25)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Simulate a bit of progress for better UX
+      setProcessingStage("Processing...");
+      setProcessingProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Something went wrong on the server.");
+      }
+
+      const result = await response.json();
+      console.log("Backend response:", result);
+
+      setProcessingStage("Indexing complete!");
+      setProcessingProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setIsProcessing(false);
+      setIsProcessed(true); // This will switch to the ChatInterface component
+
+    // ... inside your component function
+
+    } catch (error: any) { // It's good practice to type the error as 'any' or 'unknown'
+      console.error("Error processing documents:", error);
+      // FIX IS HERE: Use backticks for the template literal string
+      alert(`An error occurred: ${error.message}`);
+      setIsProcessing(false);
+      setProcessingProgress(0);
+      setProcessingStage("");
     }
 
-    setIsProcessing(false)
-    setIsProcessed(true)
-  }
+// ... rest of your component
+  };
 
   if (isProcessed) {
     return <ChatInterface files={files} />
