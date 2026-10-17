@@ -12,6 +12,7 @@ import { FileText, Upload, X, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { DocumentUpload } from "@/components/document-upload"
 import { ChatInterface } from "@/components/chat-interface"
+import { RAG_API_URL } from "@/lib/config"
 
 export default function ChatDocumentPage() {
   const [files, setFiles] = useState<File[]>([])
@@ -49,7 +50,7 @@ export default function ChatDocumentPage() {
     
     try {
       // Make the actual API call to your backend
-      const response = await fetch("http://127.0.0.1:8002/process-documents/", {
+      const response = await fetch(`${RAG_API_URL}/process-documents/`, {
         method: "POST",
         body: formData,
       });

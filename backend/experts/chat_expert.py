@@ -38,10 +38,10 @@ except Exception as e:
     logger.error(f"Error loading .env file: {e}")
 
 API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    raise RuntimeError("Please set the GOOGLE_API_KEY or GEMINI_API_KEY environment variable. Ensure a .env file is present in the same directory as this script.")
-
-genai.configure(api_key=API_KEY)
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+else:
+    logger.warning("GOOGLE_API_KEY or GEMINI_API_KEY not configured. Vision and chat features require an API key in .env.")
 MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -127,6 +127,13 @@ async def analyze_image(file: UploadFile = File(...)):
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload an image.")
+
+    current_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or API_KEY
+    if not current_key:
+        raise HTTPException(
+            status_code=500,
+            detail="Gemini API key is not configured. Please set GOOGLE_API_KEY or GEMINI_API_KEY in your .env file."
+        )
 
     file_path = UPLOAD_DIR / f"{uuid.uuid4()}_{file.filename}"
     try:

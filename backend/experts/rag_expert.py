@@ -22,12 +22,16 @@ from dotenv import load_dotenv
 # INITIAL SETUP
 # -----------------
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 groq_api_key = os.getenv('GROQ_API_KEY')
 if not groq_api_key:
-    raise ValueError("Missing GROQ_API_KEY!")
+    logger.warning("GROQ_API_KEY is not set. Document Q&A chat endpoint requires GROQ_API_KEY in .env.")
 
-app = FastAPI()
+app = FastAPI(title="Document RAG API", description="Document Ingestion & Contextual Q&A Service")
 
 app.add_middleware(
     CORSMiddleware,
@@ -107,11 +111,15 @@ async def chat_with_doc(query: dict):
     if vector_store is None:
         raise HTTPException(status_code=400, detail="Please process a document first.")
 
-    if not user_question:
-        raise HTTPException(status_code=400, detail="No question provided.")
+    current_key = os.getenv("GROQ_API_KEY") or groq_api_key
+    if not current_key:
+        raise HTTPException(
+            status_code=500,
+            detail="Missing GROQ_API_KEY. Please set GROQ_API_KEY in your .env file."
+        )
 
     try:
-        llm = ChatGroq(groq_api_key=groq_api_key, model_name="llama-3.1-8b-instant")
+        llm = ChatGroq(groq_api_key=current_key, model_name="llama-3.1-8b-instant")
         prompt = ChatPromptTemplate.from_template(
             """
         

@@ -10,6 +10,7 @@ import Link from "next/link"
 import { ImageUpload } from "@/components/image-upload"
 import { CameraCapture } from "@/components/camera-capture"
 import { EntitySelection } from "@/components/entity-selection"
+import { VISION_API_URL } from "@/lib/config"
 
 // This interface already matches the backend's entity structure, which is great!
 interface Entity {
@@ -54,8 +55,8 @@ export default function ConversationObjectsPage() {
       const formData = new FormData()
       formData.append("file", file)
 
-      // Send to your FastAPI backend, now on port 8001
-      const apiResponse = await fetch("http://localhost:8001/analyze", {
+      // Send to your FastAPI backend
+      const apiResponse = await fetch(`${VISION_API_URL}/analyze`, {
         method: "POST",
         body: formData,
       })

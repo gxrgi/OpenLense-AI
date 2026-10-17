@@ -1,34 +1,36 @@
-fastapi
-uvicorn[standard]
-pydantic
-python-dotenv
-passlib[bcrypt]
-python-jose[cryptography]
-python-multipart
-groq
-crewai
-langchain-groq
-pypdf
-python-docx
-agno
-dotenv
-google.genai
+# ==============================================================================
+# OpenLense Backend Dependencies
+# ==============================================================================
 
-# Core Streamlit and LangChain
-streamlit
-langchain
-langchain_community
-langchain-groq
-python-dotenv
-langchain-google-genai  # <-- Add this
+# Web Framework & Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+python-multipart>=0.0.9
+pydantic>=2.6.0
+python-dotenv>=1.0.1
 
-# Vector Store
-faiss-cpu
+# AI, LLM & Orchestration
+google-generativeai>=0.8.0
+groq>=0.11.0
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-groq>=0.1.9
+langchain-google-genai>=1.0.7
 
-# PDF and Image Processing
-PyMuPDF
-Pillow
+# Vector Database & Embeddings
+faiss-cpu>=1.8.0
+sentence-transformers>=2.6.0
+InstructorEmbedding>=1.0.1
 
-# Local Embedding Model
-sentence-transformers
-# You can remove torch, transformers, bitsandbytes, accelerate if not using Llava
+# Document Parsing & Multimodal Processing
+pypdf>=4.1.0
+PyMuPDF>=1.24.0
+python-docx>=1.1.0
+Pillow>=10.2.0
+unstructured[pdf]>=0.12.0
+python-magic-bin>=0.4.14; sys_platform == 'win32'
+
+# Security & Utilities
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+requests>=2.31.0

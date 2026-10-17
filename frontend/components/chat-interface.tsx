@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { FileText, Send, Search, Download, MessageSquare, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { RAG_API_URL } from "@/lib/config"
 
 interface Message {
   role: "user" | "assistant"
@@ -46,7 +47,7 @@ export function ChatInterface({ files }: ChatInterfaceProps) {
 
     try {
       // Send the user's question to the /chat/ endpoint
-      const response = await fetch("http://127.0.0.1:8002/chat/", {
+      const response = await fetch(`${RAG_API_URL}/chat/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: input }),

@@ -1,30 +1,79 @@
-# OpenLense AI App
+# OpenLense Frontend 🎨
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+The modern web user interface for **OpenLense**, built with **Next.js 14 (App Router)**, **TypeScript**, **Tailwind CSS**, and **Radix UI**.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/colleges-projects-9bd609bf/v0-open-lense-ai-app)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/EmthUUKxgAl)
+---
 
-## Overview
+## ⚡ Tech Stack
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [Radix UI](https://www.radix-ui.com/) / [shadcn/ui](https://ui.shadcn.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **State Management**: React Hooks & Zustand
 
-## Deployment
+---
 
-Your project is live at:
+## 🚀 Getting Started
 
-**[https://vercel.com/colleges-projects-9bd609bf/v0-open-lense-ai-app](https://vercel.com/colleges-projects-9bd609bf/v0-open-lense-ai-app)**
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-## Build your app
+### 2. Configure Environment Variables
+Copy the example environment file:
+```bash
+cp .env.example .env.local
+```
 
-Continue building your app on:
+Default variables:
+```env
+NEXT_PUBLIC_VISION_API_URL=http://localhost:8001
+NEXT_PUBLIC_RAG_API_URL=http://127.0.0.1:8002
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-**[https://v0.app/chat/projects/EmthUUKxgAl](https://v0.app/chat/projects/EmthUUKxgAl)**
+### 3. Run Development Server
+```bash
+npm run dev
+```
 
-## How It Works
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+---
+
+## 📁 Directory Structure
+
+```
+frontend/
+├── app/
+│   ├── conversation-objects/   # Photo upload, camera capture & object persona chat
+│   ├── chat-document/          # Document upload & RAG retrieval interface
+│   ├── page.tsx                # Landing page
+│   ├── layout.tsx              # Root layout & font configurations
+│   └── globals.css             # Tailwind & theme variables
+├── components/                 # Reusable React components
+│   ├── camera-capture.tsx      # Live webcam snapshot module
+│   ├── chat-interface.tsx      # Document RAG Q&A chat
+│   ├── document-upload.tsx     # Drag-and-drop document uploader
+│   ├── entity-selection.tsx    # Detected object selector
+│   ├── image-upload.tsx        # Image file upload module
+│   ├── multi-entity-chat.tsx   # Multi-character persona chat room
+│   └── ui/                     # Radix UI primitive components
+├── lib/
+│   ├── config.ts               # Environment API URLs
+│   ├── api.ts                  # API client helpers
+│   └── utils.ts                # Class merging & utility functions
+└── public/                     # Static assets & SVG icons
+```
+
+---
+
+## 📦 Production Build
+
+```bash
+npm run build
+npm start
+```

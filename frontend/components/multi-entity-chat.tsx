@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ArrowLeft, Send, Plus, Info, MessageSquare, Users } from "lucide-react"
 import Link from "next/link"
+import { VISION_API_URL } from "@/lib/config"
 
 interface Entity {
   id: string
@@ -86,7 +87,7 @@ export function MultiEntityChat({ entities, image }: MultiEntityChatProps) {
       const updatedMessages = [...messages, userMessage];
       const historyForApi = updatedMessages.map(({ speaker, content }) => ({ speaker, content }));
 
-      const response = await fetch("http://localhost:8001/chat/message", {
+      const response = await fetch(`${VISION_API_URL}/chat/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

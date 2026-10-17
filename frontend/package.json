@@ -1,6 +1,7 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "openlense-frontend",
+  "version": "1.0.0",
+  "description": "OpenLense Web UI - Multimodal Visual Entity Conversation & Document RAG Platform",
   "private": true,
   "scripts": {
     "build": "next build",
