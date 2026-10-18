@@ -12,7 +12,11 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 import google.generativeai as genai
 import google.generativeai.types as genai_types
-import google.api_core.exceptions
+try:
+    from google.api_core.exceptions import ServiceUnavailable
+except Exception:
+    class ServiceUnavailable(Exception):
+        pass
 from googleapiclient.errors import ResumableUploadError
 import shutil
 from contextlib import asynccontextmanager
@@ -95,7 +99,7 @@ def upload_to_gemini_with_retries(file_path: Path, mime_type: str, max_retries: 
             logger.info(f"Uploading to Gemini (attempt {attempt + 1}/{max_retries})")
             time.sleep(random.uniform(1, 3))  # Jitter
             return genai.upload_file(path=file_path, mime_type=mime_type)
-        except (google.api_core.exceptions.ServiceUnavailable, ResumableUploadError) as e:
+        except (ServiceUnavailable, ResumableUploadError) as e:
             logger.warning(f"Upload failed (attempt {attempt + 1}): {str(e)}")
             if attempt < max_retries - 1:
                 time.sleep(2 ** min(attempt, 5))  # Backoff up to 32s
@@ -234,7 +238,7 @@ async def analyze_image(file: UploadFile = File(...)):
         
         return JSONResponse(content=response_data)
         
-    except google.api_core.exceptions.ServiceUnavailable as e:
+    except ServiceUnavailable as e:
         logger.error(f"Gemini unavailable: {str(e)}")
         return JSONResponse(
             status_code=503,
