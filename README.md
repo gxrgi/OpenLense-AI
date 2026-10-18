@@ -6,9 +6,12 @@
 [![Groq Llama 3](https://img.shields.io/badge/RAG%20LLM-Groq%20Llama%203.1-f55036?style=for-the-badge)](https://groq.com/)
 [![FAISS](https://img.shields.io/badge/Vector%20Store-FAISS-blue?style=for-the-badge)](https://github.com/facebookresearch/faiss)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![OpenLense CI](https://github.com/gxrgi/OpenLense-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/gxrgi/OpenLense-AI/actions)
 
 > **See deeper. Understand faster.**  
 > An intelligent multimodal AI platform combining **Visual Entity Persona Conversations** and **Document Retrieval-Augmented Generation (RAG)**.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgxrgi%2FOpenLense-AI&root-directory=frontend)
 
 ---
 
