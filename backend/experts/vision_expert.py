@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 import google.generativeai as genai
 import google.generativeai.types as genai_types
+import google.api_core.exceptions
 from googleapiclient.errors import ResumableUploadError
 import shutil
 from contextlib import asynccontextmanager

@@ -22,9 +22,9 @@ jobs:
       - name: Lint Python Code
         run: |
           # Stop the build if there are Python syntax errors or undefined names
-          flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 backend --exclude=venv,.venv --count --select=E9,F63,F7,F82 --show-source --statistics
           # Exit-zero treats all errors as warnings
-          flake8 backend --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics
+          flake8 backend --exclude=venv,.venv --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics
 
   frontend-build:
     runs-on: ubuntu-latest
