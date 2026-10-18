@@ -129,11 +129,33 @@ async def analyze_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload an image.")
 
     current_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or API_KEY
-    if not current_key:
-        raise HTTPException(
-            status_code=500,
-            detail="Gemini API key is not configured. Please set GOOGLE_API_KEY or GEMINI_API_KEY in your .env file."
-        )
+    if not current_key or current_key in ["your_gemini_api_key_here", ""]:
+        logger.info("Demo Mode: No Gemini API key configured. Returning simulated entities for demonstration.")
+        demo_entities = [
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Vintage Desk Lamp",
+                "category": "Lighting",
+                "attributes": {"Description": "An antique brass adjustable lamp casting warm illumination across the desk.", "State": "Switched on"}
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Artisan Coffee Mug",
+                "category": "Tableware",
+                "attributes": {"Description": "A ceramic mug steaming with fresh dark roast espresso.", "Level": "Half full"}
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Leather Journal",
+                "category": "Stationery",
+                "attributes": {"Description": "A classic bound notebook with fine cream paper, ready for ideas.", "Pages": "200"}
+            }
+        ]
+        return JSONResponse(content={
+            "entities": demo_entities,
+            "object_count": len(demo_entities),
+            "image_url": f"/uploads/{file.filename}"
+        })
 
     file_path = UPLOAD_DIR / f"{uuid.uuid4()}_{file.filename}"
     try:
@@ -226,6 +248,15 @@ async def generate_agent_response(
     # Add the current user message to the history for context
     model_history.append({"role": "user", "parts": [{"text": user_message}]})
 
+    current_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or API_KEY
+    if not current_key or current_key in ["your_gemini_api_key_here", ""]:
+        demo_answers = [
+            f"Hey there! I'm the {entity.name}. You mentioned: '{user_message}'. Everything is working smoothly here in demo mode!",
+            f"Greetings from the {entity.name}! I heard you say '{user_message}'. Pretty cool to be chatting as an object, right?",
+            f"Speaking on behalf of the {entity.category} crew, '{user_message}' is a great thought!",
+        ]
+        return random.choice(demo_answers)
+
     model = genai.GenerativeModel(
         model_name=MODEL_NAME,
         system_instruction=system_prompt,
@@ -259,6 +290,13 @@ async def get_next_speaker(
         f"User's new message: \"{user_message}\"\n\n"
         "Who is the most logical speaker?"
     )
+
+    current_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or API_KEY
+    if not current_key or current_key in ["your_gemini_api_key_here", ""]:
+        for name in entity_names:
+            if name.lower() in user_message.lower():
+                return name
+        return random.choice(entity_names)
 
     model = genai.GenerativeModel(MODEL_NAME, generation_config={"temperature": 0.2})
     response = await model.generate_content_async(prompt)

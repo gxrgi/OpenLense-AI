@@ -167,30 +167,29 @@ except Exception as e:
 # -----------------------------------------------------------------------------
 def run_dual_services():
     """Runs chat_expert on 8001 and rag_expert on 8002 concurrently."""
-    import multiprocessing
     import subprocess
 
     logger.info("Starting OpenLense in Dual-Service Mode:")
     logger.info(" - Vision & Persona Chat API: http://localhost:8001")
     logger.info(" - Document RAG API:          http://localhost:8002")
 
-    def run_vision():
-        sys.path.insert(0, str(BASE_DIR))
-        uvicorn.run("experts.chat_expert:app", host="0.0.0.0", port=8001, reload=False)
+    env = os.environ.copy()
+    env["PYTHONPATH"] = f"{BASE_DIR}:{env.get('PYTHONPATH', '')}"
 
-    def run_rag():
-        sys.path.insert(0, str(BASE_DIR))
-        uvicorn.run("experts.rag_expert:app", host="0.0.0.0", port=8002, reload=False)
-
-    p1 = multiprocessing.Process(target=run_vision, name="VisionService")
-    p2 = multiprocessing.Process(target=run_rag, name="RAGService")
-
-    p1.start()
-    p2.start()
+    p1 = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "experts.chat_expert:app", "--host", "0.0.0.0", "--port", "8001"],
+        cwd=str(BASE_DIR),
+        env=env
+    )
+    p2 = subprocess.Popen(
+        [sys.executable, "-m", "uvicorn", "experts.rag_expert:app", "--host", "0.0.0.0", "--port", "8002"],
+        cwd=str(BASE_DIR),
+        env=env
+    )
 
     try:
-        p1.join()
-        p2.join()
+        p1.wait()
+        p2.wait()
     except KeyboardInterrupt:
         logger.info("Stopping dual services...")
         p1.terminate()

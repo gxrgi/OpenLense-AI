@@ -7,9 +7,17 @@ import uvicorn  # Import uvicorn
 
 # LangChain components
 from langchain_groq import ChatGroq
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains import create_retrieval_chain
+try:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+except ImportError:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+try:
+    from langchain.chains.combine_documents import create_stuff_documents_chain
+    from langchain.chains import create_retrieval_chain
+except ImportError:
+    from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+    from langchain_classic.chains import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
@@ -59,7 +67,11 @@ async def process_documents(
     """
     global vector_store
 
-    print(f"Received {len(files)} files. Chunk size: {chunk_size}, Embedding Model: {embedding_model}")
+    current_key = os.getenv("GROQ_API_KEY") or groq_api_key
+    if not current_key or current_key in ["your_groq_api_key_here", ""]:
+        print(f"Demo Mode: Processing {len(files)} files without GROQ_API_KEY.")
+        vector_store = "DEMO_VECTOR_STORE"
+        return {"status": "success", "message": f"Successfully processed {len(files)} document(s) in Demo Mode."}
 
     all_docs = []
 
@@ -112,11 +124,10 @@ async def chat_with_doc(query: dict):
         raise HTTPException(status_code=400, detail="Please process a document first.")
 
     current_key = os.getenv("GROQ_API_KEY") or groq_api_key
-    if not current_key:
-        raise HTTPException(
-            status_code=500,
-            detail="Missing GROQ_API_KEY. Please set GROQ_API_KEY in your .env file."
-        )
+    if vector_store == "DEMO_VECTOR_STORE" or not current_key or current_key in ["your_groq_api_key_here", ""]:
+        return {
+            "answer": f"[Demo Mode] Here is a synthesized answer from your document: '{user_question}'. Connect your free GROQ_API_KEY in backend/.env for live Llama 3.1 contextual extraction!"
+        }
 
     try:
         llm = ChatGroq(groq_api_key=current_key, model_name="llama-3.1-8b-instant")
