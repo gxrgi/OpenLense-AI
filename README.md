@@ -30,6 +30,7 @@
 | 📚 **Document RAG Ingestion** | Chunks documents using recursive character splitters and indexes dense embeddings into FAISS. | BAAI/bge-base-en-v1.5 |
 | ⚡ **Instant Q&A with Citations** | Strict context-grounded Q&A preventing hallucinations. | Llama 3.1 8B Instant via Groq |
 | 🖥️ **Fullstack Modern UI** | Polished dark/light interface built with Next.js App Router, Radix UI, and Tailwind CSS. | Next.js 14 + TypeScript |
+| 🎮 **Zero-Config Demo Mode** | Instant out-of-the-box exploration without API keys using simulated personas & mock RAG Q&A. | Built-in Simulation Engine |
 | 🐳 **Containerized Setup** | Ready for production deployment with Docker and Docker Compose. | Docker / Compose |
 
 ---
@@ -116,12 +117,29 @@ OpenLense/
 
 ## 🚀 Quick Start Guide
 
-### Option A: Running with Docker Compose (Recommended)
+> [!TIP]
+> Explore the "Converse with Objects" and "Chat with Documents" tabs — our built-in demo fallback mode is active, so you can interact with the app immediately without any API keys.
+> If you decide to connect live models later, you can add your free keys to `backend/.env` anytime.
+
+### Option A: Running with One-Command Scripts (Fastest)
+
+Open two terminal tabs:
+```bash
+# Terminal 1: Setup and start Backend (Vision: 8001, RAG: 8002)
+./start_backend.sh
+
+# Terminal 2: Setup and start Frontend (Web UI: 3000)
+./start_frontend.sh
+```
+
+---
+
+### Option B: Running with Docker Compose
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/kanakkadulkar/OpenLense-Media.Net.git
-   cd OpenLense-Media.Net
+   git clone https://github.com/gxrgi/OpenLense-AI.git
+   cd OpenLense-AI
    ```
 
 2. **Configure environment keys**:
@@ -141,7 +159,7 @@ OpenLense/
 
 ---
 
-### Option B: Local Development Setup
+### Option C: Manual Development Setup
 
 #### 1. Backend Setup
 
@@ -204,9 +222,9 @@ Visit [http://localhost:3000](http://localhost:3000) to view the application.
 
 | Variable | Required | Default | Description |
 | :--- | :---: | :--- | :--- |
-| `GOOGLE_API_KEY` | **Yes** | — | Google Gemini API key for image entity extraction and character persona chat. |
+| `GOOGLE_API_KEY` | Live Models | — | Google Gemini API key for image entity extraction and character persona chat. (Optional in Demo Mode) |
 | `GEMINI_MODEL` | No | `gemini-2.5-flash` | Gemini model variant. |
-| `GROQ_API_KEY` | **Yes** | — | Groq Cloud API key for ultra-fast Llama 3.1 RAG generation. |
+| `GROQ_API_KEY` | Live Models | — | Groq Cloud API key for ultra-fast Llama 3.1 RAG generation. (Optional in Demo Mode) |
 | `EMBEDDING_MODEL` | No | `BAAI/bge-base-en-v1.5` | HuggingFace embedding model for document vectorization. |
 | `PORT` | No | `8000` | Port for unified backend mode. |
 | `CORS_ORIGINS` | No | `http://localhost:3000` | Comma-separated list of allowed CORS origins. |
@@ -257,4 +275,4 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 ## 👤 Author
 
-Developed by **[Kanak Kadulkar](https://github.com/kanakkadulkar)**.
+Developed by **[Gargi Rane](https://github.com/gxrgi)**.

@@ -19,7 +19,7 @@ export default function LandingPage() {
             <Link href="/docs" className="text-muted-foreground hover:text-foreground transition-colors">
               Docs
             </Link>
-            <Link href="https://github.com/kanakkadulkar/OpenLense-Media.Net" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="https://github.com/gxrgi/OpenLense-AI" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
               GitHub
             </Link>
             
