@@ -117,7 +117,6 @@ async def chat_with_doc(query: dict):
     """
     Endpoint to ask a question and get an answer.
     """
-    global vector_store
     user_question = query.get("question")
 
     if vector_store is None:
